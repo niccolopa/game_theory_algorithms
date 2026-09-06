@@ -31,13 +31,14 @@ The first example is inspired by a two-bar pricing game. It is small enough to u
 
 #### First Performance Result
 
-The first timing experiment measured the pure-strategy Nash-equilibrium scan after the matrix had been reduced by eliminating strictly dominated strategies. On the current machine, one run took:
+The first timing experiment measured the pure-strategy Nash-equilibrium scan after the matrix had been reduced by eliminating strictly dominated strategies. After fixing the iterated-elimination `while` loop, the current run produced:
 
 ```text
-Execution time: 100 nanoseconds
+Nash Equilibrium at cell [0][0] with strategies: Low (Player 1), Low (Player 2) and payoffs: (93, 93)
+Execution time: 1900 nanoseconds
 ```
 
-This result is useful as an initial baseline, but it should be interpreted carefully. The example is a very small game, and the measurement covers only the equilibrium-search section, not matrix construction, printing, logging, or strategy elimination. At this scale, operating-system scheduling, compiler optimisations, and the clock's resolution can have a noticeable effect on the result.
+The result confirms the economic logic of this example: after strictly dominated `High` strategies are removed, the remaining `(Low, Low)` outcome is a pure-strategy Nash equilibrium. The timing is useful as an initial baseline, but it should be interpreted carefully. The example is a very small game, and the measurement covers only the equilibrium-search section, not matrix construction, printing, logging, or strategy elimination. At this scale, operating-system scheduling, compiler optimisations, and the clock's resolution can have a noticeable effect on the result.
 
 The next benchmarking step will repeat the same calculation many times and measure the total duration. That should produce a more stable average and make comparisons meaningful when the game matrix becomes larger. The aim is not to claim that a tiny example proves high performance; it is to create a measured reference point for the later levels.
 
@@ -87,7 +88,7 @@ The important question will not simply be whether the program can use more CPU c
 
 ## Current Status
 
-The project is currently at Level 1 and beginning the transition toward Level 2. The program can represent and display a two-player payoff matrix, log its output, search for pure-strategy equilibria, and measure the solver's runtime.
+The project has completed the first Level 1 matrix and equilibrium-search milestone and is now entering Level 2. The program can represent and display a two-player payoff matrix, eliminate strictly dominated strategies iteratively, identify the remaining pure-strategy equilibrium, log its output, and measure the solver's runtime.
 
 The implementation is intentionally being developed in small steps. Some experiments may be incomplete or revised as my understanding improves. That is part of the project: the code is also a record of the learning process.
 

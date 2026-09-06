@@ -13,6 +13,18 @@ struct Payoff {
     int player2; // Payoff for player 2 (column player, bar B)
 };
 
+// Level 2: iterated elimimination function
+void eliminate_strictly_dominated_strategies(
+    std::vector<std::vector<Payoff>>& game_matrix,
+    std::vector<std::string>& strategies_p1,
+    std::vector<std::string>& strategies_p2,
+    std::ofstream& log_file
+) {
+    // Implementation for iterated elimination of strictly dominated strategies
+    bool eliminated_this_round = true;
+}
+
+
 int main() {
     std::ofstream log_file("phase_1.log", std::ios::app);
     if (!log_file) {
@@ -23,7 +35,8 @@ int main() {
     log_file << "Starting payoff matrix run\n";
 
     //2. define the strategies for both players
-    std::vector<std::string> strategies= {"High", "Low"};
+    std::vector<std::string> strategies_p1= {"High", "Low"};
+    std::vector<std::string> strategies_p2= {"High", "Low"};
 
     //3. define the payoff matrix for the game
     //The weekly payoff matrix is a 2x2 matrix where each cell contains a Payoff structure representing the payoffs for both players.
@@ -43,13 +56,13 @@ int main() {
     std::cout << std::setw(label_width) << ""
               << std::setw(cell_width * 2) << "PLAYER 2 (columns)" << "\n";
     std::cout << std::setw(label_width) << "PLAYER 1 (rows)"
-              << std::setw(cell_width) << strategies[0]
-              << std::setw(cell_width) << strategies[1] << "\n";
+              << std::setw(cell_width) << strategies_p1[0]
+              << std::setw(cell_width) << strategies_p1[1] << "\n";
 
     // Print each row of the matrix with Player 1's strategies and the corresponding payoffs
-    for (size_t i = 0; i < strategies.size(); ++i) {
-        std::cout << std::setw(label_width) << strategies[i];
-        for (size_t j = 0; j < strategies.size(); ++j) {
+    for (size_t i = 0; i < strategies_p1.size(); ++i) {
+        std::cout << std::setw(label_width) << strategies_p1[i];
+        for (size_t j = 0; j < strategies_p2.size(); ++j) {
             std::string payoff = "(" + std::to_string(game_matrix[i][j].player1)
                                + ", " + std::to_string(game_matrix[i][j].player2) + ")";
             std::cout << std::setw(cell_width) << payoff;
@@ -61,13 +74,16 @@ int main() {
     } 
     log_file << "Finished payoff matrix run\n\n";
 
+    // 4.5 Run the Iterated Elimination engine
+    eliminate_strictly_dominated_strategies(game_matrix, strategies_p1, strategies_p2, log_file);
+
     // 4.5. Initialize a boolean flag `eliminated_this_round = true` to control a while loop.
     // The loop must continue running as long as a strategy was eliminated in the previous pass.
     bool eliminated_this_round = true;
     // 4.5a. Inside the while loop, immediately set `eliminated_this_round = false`.
     while (eliminated_this_round) {
         eliminated_this_round = false;
-    }
+    
     // 4.5b. PLAYER 1 (ROW) CHECK:
     // Loop through all pairs of active rows (Row A and Row B).
     // Check if Row A is STRICTLY DOMINATED by Row B. 
@@ -85,9 +101,9 @@ int main() {
                     }
                 }
                 if (is_dominated) {
-                    log_file << "Player 1 strategy " << strategies[i] << " is strictly dominated by " << strategies[j] << ". Eliminating " << strategies[i] << ".\n";
+                    log_file << "Player 1 strategy " << strategies_p1[i] << " is strictly dominated by " << strategies_p1[j] << ". Eliminating " << strategies_p1[i] << ".\n";
                     game_matrix.erase(game_matrix.begin() + i);
-                    strategies.erase(strategies.begin() + i);
+                    strategies_p1.erase(strategies_p1.begin() + i);
                     eliminated_this_round = true;
                     break; // Break to resize the matrix safely
                 }
@@ -113,11 +129,11 @@ int main() {
                     }
                 }
                 if (is_dominated) {
-                    log_file << "Player 2 strategy " << strategies[i] << " is strictly dominated by " << strategies[j] << ". Eliminating " << strategies[i] << ".\n";
+                    log_file << "Player 2 strategy " << strategies_p2[i] << " is strictly dominated by " << strategies_p2[j] << ". Eliminating " << strategies_p2[i] << ".\n";
                     for (auto& row : game_matrix) {
                         row.erase(row.begin() + i);
                     }
-                    strategies.erase(strategies.begin() + i);
+                    strategies_p2.erase(strategies_p2.begin() + i);
                     eliminated_this_round = true;
                     break; // Break to resize the matrix safely
                 }
@@ -125,19 +141,20 @@ int main() {
         }
         if (eliminated_this_round) break; // Break outer loop to restart checks after resizing
     }
+    }
 
     //4.6 After the while loop ends, print the reduced game matrix to the console and log file in the same format as before. This will show the remaining strategies after eliminating strictly dominated strategies.
     //write a quick loop to print the reduced game matrix to the console and log file in the same format as before. This will show the remaining strategies after eliminating strictly dominated strategies.
     std::cout << "\n** reduced two-player game matrix after eliminating strictly dominated strategies **\n";
     std::cout << std::setw(label_width) << ""
-              << std::setw(cell_width * strategies.size()) << "PLAYER 2 (columns)" << "\n";
+              << std::setw(cell_width * strategies_p2.size()) << "PLAYER 2 (columns)" << "\n";
     std::cout << std::setw(label_width) << "PLAYER 1 (rows)";
-    for (const auto& strategy : strategies) {
+    for (const auto& strategy : strategies_p1) {
         std::cout << std::setw(cell_width) << strategy;
     }
     std::cout << "\n";
     for (size_t i = 0; i < game_matrix.size(); ++i) {
-        std::cout << std::setw(label_width) << strategies[i];
+        std::cout << std::setw(label_width) << strategies_p1[i];
         for (size_t j = 0; j < game_matrix[i].size(); ++j) {
             std::string payoff = "(" + std::to_string(game_matrix[i][j].player1)
                                + ", " + std::to_string(game_matrix[i][j].player2) + ")";
@@ -157,13 +174,13 @@ int main() {
 
     //6 Loop through every single cell [i][j] in the game_matrix to test if it is a Nash Equilibrium.
     // 6a. Assume the current cell [i][j] is the best response for both players (initialize two boolean flags to true).
-    for (size_t i = 0; i < strategies.size(); ++i) {
-        for (size_t j = 0; j < strategies.size(); ++j) {
+    for (size_t i = 0; i < strategies_p1.size(); ++i) {
+        for (size_t j = 0; j < strategies_p2.size(); ++j) {
             bool is_best_response_player1 = true;
             bool is_best_response_player2 = true;
 
             // 6b. Check if Player 1 has a better response in the same column (j).
-            for (size_t k = 0; k < strategies.size(); ++k) {
+            for (size_t k = 0; k < strategies_p1.size(); ++k) {
                 if (game_matrix[k][j].player1 > game_matrix[i][j].player1) {
                     is_best_response_player1 = false;
                     break;
@@ -171,7 +188,7 @@ int main() {
             }
 
             // 6c. Check if Player 2 has a better response in the same row (i).
-            for (size_t l = 0; l < strategies.size(); ++l) {
+            for (size_t l = 0; l < strategies_p2.size(); ++l) {
                 if (game_matrix[i][l].player2 > game_matrix[i][j].player2) {
                     is_best_response_player2 = false;
                     break;
@@ -206,11 +223,11 @@ int main() {
             int row = eq.first;
             int col = eq.second;
             std::cout << "Nash Equilibrium at cell [" << row << "][" << col << "] with strategies: "
-                      << strategies[row] << " (Player 1), " << strategies[col] << " (Player 2) "
+                      << strategies_p1[row] << " (Player 1), " << strategies_p2[col] << " (Player 2) "
                       << "and payoffs: (" << game_matrix[row][col].player1
                       << ", " << game_matrix[row][col].player2 << ")\n";
             log_file << "Nash Equilibrium at cell [" << row << "][" << col << "] with strategies: "
-                     << strategies[row] << " (Player 1), " << strategies[col] << " (Player 2) "
+                     << strategies_p1[row] << " (Player 1), " << strategies_p2[col] << " (Player 2) "
                      << "and payoffs: (" << game_matrix[row][col].player1
                      << ", " << game_matrix[row][col].player2 << ")\n";
         }
