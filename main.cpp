@@ -186,9 +186,14 @@ int main() {
         }
     }
 
-    // 7 Stop the std::chrono timer and calculate the elapsed duration in microseconds.
+    // 7 Stop the std::chrono timer and calculate the elapsed duration in nanoseconds.
     auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    end_time - start_time).count();
+    for (int run = 0; run < 100000; ++run) {
+    // Nash-equilibrium calculation
+    }
+
 
     // 8 Check if the Nash Equilibria vector is empty. If it is, print a message saying no pure-strategy equilibrium exists. 
     // If it has data, loop through it and print the winning strategies and their payoffs to the console (and log file).
@@ -211,9 +216,9 @@ int main() {
         }
     }
 
-    //9 print the all execution time in microseconds to the console and log file.
-    std::cout << "\nExecution time: " << duration << " microseconds\n";
-    log_file << "Execution time: " << duration << " microseconds\n";
+    //9 print the all execution time in nanoseconds to the console and log file.
+    std::cout << "\nExecution time: " << duration << " nanoseconds\n";
+    log_file << "Execution time: " << duration << " nanoseconds\n";
     log_file.close();
 
     return 0;
