@@ -35,15 +35,23 @@ int main() {
     //4. render the payoff matrix in a readable format
     std::cout << "\n** two-player game matrix **\n\n";
 
-    // Print the header row with Player 2's strategies
-    std::cout << std::setw(15) << "Player 2" << std::setw(15) << strategies[0] << std::setw(15) << strategies[1] << "\n";
-    std::cout << std::setw(15) << "Player 1" << "\n";
+    constexpr int label_width = 24;
+    constexpr int cell_width = 20;
+
+    // Player 1 chooses rows; Player 2 chooses columns.
+    std::cout << std::setw(label_width) << ""
+              << std::setw(cell_width * 2) << "PLAYER 2 (columns)" << "\n";
+    std::cout << std::setw(label_width) << "PLAYER 1 (rows)"
+              << std::setw(cell_width) << strategies[0]
+              << std::setw(cell_width) << strategies[1] << "\n";
 
     // Print each row of the matrix with Player 1's strategies and the corresponding payoffs
     for (size_t i = 0; i < strategies.size(); ++i) {
-        std::cout << std::setw(15) << strategies[i];
+        std::cout << std::setw(label_width) << strategies[i];
         for (size_t j = 0; j < strategies.size(); ++j) {
-            std::cout << std::setw(15) << "(" << game_matrix[i][j].player1 << ", " << game_matrix[i][j].player2 << ")";
+            std::string payoff = "(" + std::to_string(game_matrix[i][j].player1)
+                               + ", " + std::to_string(game_matrix[i][j].player2) + ")";
+            std::cout << std::setw(cell_width) << payoff;
             log_file << "Cell [" << i << "][" << j << "]: ("
                      << game_matrix[i][j].player1 << ", "
                      << game_matrix[i][j].player2 << ")\n";
