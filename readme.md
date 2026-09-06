@@ -46,7 +46,7 @@ The next benchmarking step will repeat the same calculation many times and measu
 
 The next step is to reduce the search space using iterated elimination of strictly dominated strategies. A strategy is strictly dominated when another strategy gives a player a higher payoff in every relevant situation.
 
-This level will explore:
+This level implements:
 
 - Comparing rows and columns of a payoff matrix
 - Removing dominated strategies safely while containers are changing
@@ -54,7 +54,40 @@ This level will explore:
 - Generating large random matrices for stress-testing
 - Comparing a direct exhaustive approach with a reduced search space
 
-The aim is to connect an economic idea, rationalizability, with practical algorithmic efficiency.
+The aim is to connect an economic idea, rationalizability, with practical algorithmic efficiency. Both Level 2 phases are now complete.
+
+#### Phase 1: Iterated Elimination
+
+`eliminate_strictly_dominated_strategies` receives the matrix, both strategy-label vectors, and the log stream by reference. It repeatedly:
+
+1. Compares Player 1's rows using Player 1's payoffs.
+2. Removes a row when another active row gives a strictly higher payoff in every active column.
+3. Compares Player 2's columns using Player 2's payoffs.
+4. Removes a column when another active column gives a strictly higher payoff in every active row.
+5. Starts another pass whenever an elimination occurs.
+
+The small game removes `High` for both players. The remaining matrix is:
+
+```text
+			  Player 2: Low
+Player 1: Low       (93, 93)
+```
+
+The remaining outcome is a pure-strategy Nash equilibrium because neither player can improve their payoff by changing strategy. The strategy labels are erased at the same time as their rows or columns, so the labels remain aligned with the reduced matrix.
+
+#### Phase 2: Stress Test
+
+The program creates a 1,000 x 1,000 matrix containing one million payoff cells. Payoffs are generated randomly from 1 to 1,000. To make the test demonstrate actual elimination, rows 1 through 50 are deliberately made strictly worse for Player 1 than row 0 in every column. With independent random rows, a dominated row across 1,000 columns would be extremely unlikely, so a purely random test would usually eliminate nothing.
+
+One recorded run produced:
+
+```text
+Rows survived:    950 / 1000
+Columns survived: 1000 / 1000
+Elimination time: 17533300 nanoseconds
+```
+
+This is approximately 17.5 milliseconds on that run. The exact time will vary with hardware, compiler settings, operating-system activity, and the random matrix. The important correctness result is that all 50 planted dominated rows were removed and no columns were removed. The benchmark measures the elimination function only; it does not include matrix construction or console output.
 
 ### Level 3: Extensive-Form Games and Memory
 
@@ -88,7 +121,7 @@ The important question will not simply be whether the program can use more CPU c
 
 ## Current Status
 
-The project has completed the first Level 1 matrix and equilibrium-search milestone and is now entering Level 2. The program can represent and display a two-player payoff matrix, eliminate strictly dominated strategies iteratively, identify the remaining pure-strategy equilibrium, log its output, and measure the solver's runtime.
+The project has completed the Level 1 matrix and equilibrium-search milestone and both Level 2 phases. The program can represent and display a two-player payoff matrix, eliminate strictly dominated strategies iteratively, identify the remaining pure-strategy equilibrium, stress-test the elimination function on a 1,000 x 1,000 matrix, log its output, and measure runtime.
 
 The implementation is intentionally being developed in small steps. Some experiments may be incomplete or revised as my understanding improves. That is part of the project: the code is also a record of the learning process.
 
@@ -97,17 +130,19 @@ The implementation is intentionally being developed in small steps. Some experim
 With a C++ compiler such as `g++` installed, run:
 
 ```powershell
-g++ main.cpp -o main.exe
+g++ -std=c++17 -O2 main.cpp -o main.exe
 .\main.exe
 ```
+
+From PowerShell, run those commands in the project folder. The program prints the original matrix, the reduced matrix, the Nash-equilibrium result, and the stress-test summary. It also appends diagnostic output to `phase_1.log`.
 
 To save the program's console output to a log file while still displaying it, use PowerShell's `Tee-Object`:
 
 ```powershell
-g++ main.cpp -o main.exe; if ($LASTEXITCODE -eq 0) { .\main.exe 2>&1 | Tee-Object -FilePath output.log }
+g++ -std=c++17 -O2 main.cpp -o main.exe; if ($LASTEXITCODE -eq 0) { .\main.exe 2>&1 | Tee-Object -FilePath output.log }
 ```
 
-The program also writes diagnostic information to `phase_1.log`. Log and executable files are ignored by Git in this project.
+The executable and log files are ignored by Git in this project. Run the program again whenever you want a new random stress-test result; the elapsed time may change between runs.
 
 ## Why I Am Building It This Way
 
