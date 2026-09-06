@@ -61,6 +61,96 @@ int main() {
     } 
     log_file << "Finished payoff matrix run\n\n";
 
+    // 4.5. Initialize a boolean flag `eliminated_this_round = true` to control a while loop.
+    // The loop must continue running as long as a strategy was eliminated in the previous pass.
+    bool eliminated_this_round = true;
+    // 4.5a. Inside the while loop, immediately set `eliminated_this_round = false`.
+    while (eliminated_this_round) {
+        eliminated_this_round = false;
+    }
+    // 4.5b. PLAYER 1 (ROW) CHECK:
+    // Loop through all pairs of active rows (Row A and Row B).
+    // Check if Row A is STRICTLY DOMINATED by Row B. 
+    // This requires a nested loop across all columns: if Row A's payoff is strictly less (<) than Row B's payoff for EVERY column, it is dominated.
+    // IF DOMINATED: Erase Row A from `game_matrix` and erase its name from `p1_strategies`.
+    // Set `eliminated_this_round = true`, log the elimination to your file, and `break` out of the row check so the matrix can resize safely.
+    for (size_t i = 0; i < game_matrix.size(); ++i) {
+        for (size_t j = 0; j < game_matrix.size(); ++j) {
+            if (i != j) { // Don't compare the same row
+                bool is_dominated = true;
+                for (size_t k = 0; k < game_matrix[i].size(); ++k) {
+                    if (game_matrix[i][k].player1 >= game_matrix[j][k].player1) {
+                        is_dominated = false;
+                        break;
+                    }
+                }
+                if (is_dominated) {
+                    log_file << "Player 1 strategy " << strategies[i] << " is strictly dominated by " << strategies[j] << ". Eliminating " << strategies[i] << ".\n";
+                    game_matrix.erase(game_matrix.begin() + i);
+                    strategies.erase(strategies.begin() + i);
+                    eliminated_this_round = true;
+                    break; // Break to resize the matrix safely
+                }
+            }
+        }
+        if (eliminated_this_round) break; // Break outer loop to restart checks after resizing
+    }
+
+    // 4.5c. PLAYER 2 (COLUMN) CHECK:
+    // Loop through all pairs of active columns (Column A and Column B).
+    // Check if Column A is STRICTLY DOMINATED by Column B.
+    // This requires a nested loop across all rows: if Column A's payoff is strictly less (<) than Column B's payoff for EVERY row, it is dominated.
+    // IF DOMINATED: Erase Column A from `game_matrix` and erase its name from `p2_strategies`.
+    // Set `eliminated_this_round = true`, log the elimination to your file, and `break` out of the column check so the matrix can resize safely.
+    for (size_t i = 0; i < game_matrix[0].size(); ++i) {
+        for (size_t j = 0; j < game_matrix[0].size(); ++j) {
+            if (i != j) { // Don't compare the same column
+                bool is_dominated = true;
+                for (size_t k = 0; k < game_matrix.size(); ++k) {
+                    if (game_matrix[k][i].player2 >= game_matrix[k][j].player2) {
+                        is_dominated = false;
+                        break;
+                    }
+                }
+                if (is_dominated) {
+                    log_file << "Player 2 strategy " << strategies[i] << " is strictly dominated by " << strategies[j] << ". Eliminating " << strategies[i] << ".\n";
+                    for (auto& row : game_matrix) {
+                        row.erase(row.begin() + i);
+                    }
+                    strategies.erase(strategies.begin() + i);
+                    eliminated_this_round = true;
+                    break; // Break to resize the matrix safely
+                }
+            }
+        }
+        if (eliminated_this_round) break; // Break outer loop to restart checks after resizing
+    }
+
+    //4.6 After the while loop ends, print the reduced game matrix to the console and log file in the same format as before. This will show the remaining strategies after eliminating strictly dominated strategies.
+    //write a quick loop to print the reduced game matrix to the console and log file in the same format as before. This will show the remaining strategies after eliminating strictly dominated strategies.
+    std::cout << "\n** reduced two-player game matrix after eliminating strictly dominated strategies **\n";
+    std::cout << std::setw(label_width) << ""
+              << std::setw(cell_width * strategies.size()) << "PLAYER 2 (columns)" << "\n";
+    std::cout << std::setw(label_width) << "PLAYER 1 (rows)";
+    for (const auto& strategy : strategies) {
+        std::cout << std::setw(cell_width) << strategy;
+    }
+    std::cout << "\n";
+    for (size_t i = 0; i < game_matrix.size(); ++i) {
+        std::cout << std::setw(label_width) << strategies[i];
+        for (size_t j = 0; j < game_matrix[i].size(); ++j) {
+            std::string payoff = "(" + std::to_string(game_matrix[i][j].player1)
+                               + ", " + std::to_string(game_matrix[i][j].player2) + ")";
+            std::cout << std::setw(cell_width) << payoff;
+            log_file << "Cell [" << i << "][" << j << "]: ("
+                     << game_matrix[i][j].player1 << ", "
+                     << game_matrix[i][j].player2 << ")\n";
+        }
+        std::cout << "\n";
+    }
+
+
+
     // 5. Setup a std::vector of std::pair<int, int> to store the (row, column) coordinates of any Nash Equilibria found, then start the std::chrono high-resolution timer.
     std::vector<std::pair<int, int>> nash_equilibria;
     auto start_time = std::chrono::high_resolution_clock::now();
